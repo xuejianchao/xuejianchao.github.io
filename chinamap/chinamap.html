@@ -135,6 +135,7 @@
                 };
 
                 //bind the json with path element;
+                //append path element
                 svg.selectAll("path")
                     .data(chinajson.features)
                     .enter()
@@ -153,6 +154,13 @@
                     })
                     .style("stroke","white")
                     .style("stroke-width",0.1)
+                    .on("mousehover",pathMouseoverHandler);
+
+                    //handler
+                    function pathMouseoverHandler(){
+                        this.attr("fill","rgb(210, 43, 43)");
+                    }
+
             });
 
             
