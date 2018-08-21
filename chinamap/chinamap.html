@@ -154,11 +154,25 @@
                     })
                     .style("stroke","white")
                     .style("stroke-width",0.1)
-                    .on("mousehover",pathMouseoverHandler);
+                    .on("mouseover",pathMouseoverHandler)
+                    .on("mouseout",pathMouseoutHandler);
 
                     //handler
                     function pathMouseoverHandler(){
                         this.attr("fill","rgb(210, 43, 43)");
+                    }
+                    function pathMouseoutHandler(){
+                        this.attr("fill",function(d){
+                        var num = d.properties.num;
+                        var fill;
+
+                        if(num){
+                            fill = chinacolor(num);
+                        }else{
+                            fill = "#ccc";
+                        }
+                        return fill;
+                        });
                     }
 
             });
