@@ -81,30 +81,9 @@
                     .attr("width",width)
                     .attr("height",height);
 
-        //draw the circle
-        d3.csv("./city.csv",function(chinaCityData){
-                svg.selectAll("circle")
-                    .data(chinaCityData)
-                    .enter()
-                    .append("circle")
-                    .attr("cx",function(d){
-                        return chinaprojection([d.lon,d.lat])[0];
-                    })
-                    .attr("cy",function(d){
-                        return chinaprojection([d.lon,d.lat])[1];
-                    })
-                    .attr("r",function(d){
-                        if(0 !== parseInt(d.num)) return Math.sqrt(parseInt(d.num)*20)
-                        else return 0;
-                    })
-                    .attr("id",function(d){return d.City_EN;})
-                    .style("fill","rgb(255,242,0)")
-                    .style("stroke","gray")
-                    .style("stroke-width",0.25)
-                    .style("opacity",0.75);
-        });
+       
 
-        //draw the path
+        //画路径/地图
         d3.csv("./province.csv",function(chinadata){
             
             //set domain of quantize scale
@@ -113,7 +92,6 @@
                 d3.max(chinadata,function(chinad){return chinad.Num;})
             ]);
             
-            //draw the map/path
             d3.json("china.json",function(chinajson){
 
                 //merge the csv into json
@@ -157,100 +135,150 @@
                     .on("mouseover",pathMouseoverHandler)
                     .on("mouseout",pathMouseoutHandler);
 
-                    //handler
-                    function pathMouseoverHandler(){
-                        this.attr("fill","rgb(210, 43, 43)");
-                    }
-                    function pathMouseoutHandler(){
-                        this.attr("fill",function(d){
-                        var num = d.properties.num;
-                        var fill;
 
-                        if(num){
-                            fill = chinacolor(num);
-                        }else{
-                            fill = "#ccc";
+                    //handler
+                function pathMouseoverHandler(){
+                        var thisPath = d3.select(this);
+
+                        if(thisPath.attr("fill") == "#ccc"){
+                            //注意,这里是通过.attr()方法来获取颜色,而不是thisPath.attributes.fill来引用.
                         }
-                        return fill;
+                        else{
+                            var dealt_time = 100;
+                            thisPath.transition().duration(dealt_time).style("fill","rgb(210,43,43)");
+                        }
+                    }
+                function pathMouseoutHandler(){
+                        var out_dealt_time = 100;
+                        d3.select(this).transition().duration(out_dealt_time).style("fill",function(d){
+                            var num = d.properties.num;
+                            var fill;
+
+                            if(num){
+                                fill = chinacolor(num);
+                            }else{
+                                fill = "#ccc";
+                            }
+                            return fill;
                         });
                     }
 
+                //因为回调函数是异步执行,所以要想让画圆和添加圆的监听器都在画地图之后执行.
+                //就要把画圆和添加圆的监听器的代码都放在画地图的回调函数里面.
+                //画圆
+                d3.csv("./city.csv",function(chinaCityData){
+                    console.log("开始画圆");
+                    svg.selectAll("circle")
+                        .data(chinaCityData)
+                        .enter()
+                        .append("circle")
+                        .attr("cx",function(d){
+                            return chinaprojection([d.lon,d.lat])[0];
+                        })
+                        .attr("cy",function(d){
+                            return chinaprojection([d.lon,d.lat])[1];
+                        })
+                        .attr("r",function(d){
+                            if(0 !== parseInt(d.num)) return Math.sqrt(parseInt(d.num)*20)
+                            else return 0;
+                        })
+                        .attr("id",function(d){return d.City_EN;})
+                        .style("fill","rgb(255,242,0)")
+                        .style("stroke","gray")
+                        .style("stroke-width",0.25)
+                        .style("opacity",0.75);
+                    console.log("圆画完了");
+                });
+
+                //append event handler
+                d3.csv("./student.csv",function(chinaStudentData){
+                    //遍历所有圆
+                    var circles = svg.selectAll("circle");
+                    circles.on("mouseover",mouseoverhandler)
+                            .on("mouseout",mouseouthandler);                
+                        
+                    var tooltipDealtTime = 1500;
+                    
+                    function mouseoverhandler(){
+                        var r = parseFloat(this.r.baseVal.valueAsString);
+                        if(r === 0){
+                            //r为0的城市,也就是没有学生去的城市,不显示.
+                        }
+                        else{
+                            console.log(this.__data__.City_EN);
+                            //吧所有符合条件的学生的信息收集到数组中
+                            var studentEntitled = [];
+                            var city_en = this.__data__.City_EN;//这个圆绑定的数据
+
+                            for(var i = 0;i<chinaStudentData.length;i++){
+                                //遍历学生的数据
+                                if(chinaStudentData[i].City_EN === city_en)
+                                    studentEntitled.push({Name:chinaStudentData[i].Name,Collage:chinaStudentData[i].Collage});
+                            }
+                            
+                            //然后显示信息框,在信息框中显示对象数组中的信息.
+                            //信息框草图见草稿纸
+                            //获取坐标
+                            var left = 340 + parseFloat(this.cx.animVal.valueAsString) + 5+ parseFloat(this.r.animVal.valueAsString);
+                            var top = 132.6 + parseFloat(this.cy.animVal.valueAsString) - parseFloat(this.r.animVal.valueAsString);
+                            console.log(left);
+                            console.log(top);
+
+                            
+                            //获得tooltip元素
+                            var tooltip = d3.select("#infotooltip");
+                            tooltip.style("left", left + "px")
+                                .style("top", top + "px");
+
+                            tooltip = document.getElementById("infotooltip");
+                        
+                            //append title
+                            var cityname = this.__data__.City;
+                            var title = document.createElement("p");
+                            var titleContent = document.createTextNode(cityname);
+                            title.appendChild(titleContent);
+                            title.className="title";
+                            tooltip.appendChild(title);
+
+                            //append students info
+                            for(var i =0 ; i<studentEntitled.length;i++){
+                                var info = studentEntitled[i].Name + "-" + studentEntitled[i].Collage;
+                                var para = document.createElement("p");
+                                var text = document.createTextNode(info);
+                                para.appendChild(text);
+
+                                tooltip.appendChild(para);
+                            }
+                            
+                            //show the tooltip
+                            d3.select("#infotooltip")
+                                .classed("hidden",false)
+                                .transition()
+                                .duration(tooltipDealtTime); 
+                        }
+                    }
+
+                    function mouseouthandler(){
+                        //delete all stud info
+                        var tooltip = document.getElementById("infotooltip");
+                        tooltip.innerHTML = "";
+                        //hiden
+                        d3.transition()
+                            .duration(tooltipDealtTime);
+                        d3.select("#infotooltip")
+                            .classed("hidden",true);
+
+                    }
+                });
+
             });
 
-            
+
         });
 
-        //append event handler
-        d3.csv("./student.csv",function(chinaStudentData){
-                //遍历所有圆
-                var circles = svg.selectAll("circle");
-                circles.on("mouseover",mouseoverhandler);
-                circles.on("mouseout",mouseouthandler);                
-                
-                function mouseoverhandler(){
-                    var r = parseFloat(this.r.baseVal.valueAsString);
-                    if(r === 0){
-                        //r为0的城市,也就是没有学生去的城市,不显示.
-                    }
-                    else{
-                        console.log(this.__data__.City_EN);
-                        //吧所有符合条件的学生的信息收集到数组中
-                        var studentEntitled = [];
-                        var city_en = this.__data__.City_EN;//这个圆绑定的数据
+         
 
-                        for(var i = 0;i<chinaStudentData.length;i++){
-                            //遍历学生的数据
-                            if(chinaStudentData[i].City_EN === city_en)
-                                studentEntitled.push({Name:chinaStudentData[i].Name,Collage:chinaStudentData[i].Collage});
-                        }
-                        
-                        //然后显示信息框,在信息框中显示对象数组中的信息.
-                        //信息框草图见草稿纸
-                        //获取坐标
-                        var left = 340 + parseFloat(this.cx.animVal.valueAsString) + 5+ parseFloat(this.r.animVal.valueAsString);
-                        var top = 132.6 + parseFloat(this.cy.animVal.valueAsString) - parseFloat(this.r.animVal.valueAsString);
-                        console.log(left);
-                        console.log(top);
-
-                        
-                        //获得tooltip元素
-                        var tooltip = d3.select("#infotooltip");
-                        tooltip.style("left", left + "px")
-                            .style("top", top + "px");
-
-                        tooltip = document.getElementById("infotooltip");
-                       
-                        //append title
-                        var cityname = this.__data__.City;
-                        var title = document.createElement("p");
-                        var titleContent = document.createTextNode(cityname);
-                        title.appendChild(titleContent);
-                        title.className="title";
-                        tooltip.appendChild(title);
-
-                        //append students info
-                        for(var i =0 ; i<studentEntitled.length;i++){
-                            var info = studentEntitled[i].Name + "-" + studentEntitled[i].Collage;
-                            var para = document.createElement("p");
-                            var text = document.createTextNode(info);
-                            para.appendChild(text);
-
-                            tooltip.appendChild(para);
-                        }
-
-                        //show the tooltip
-                        d3.select("#infotooltip").classed("hidden",false); 
-                    }
-                }
-
-                function mouseouthandler(){
-                    //delete all stud info
-                    var tooltip = document.getElementById("infotooltip");
-                    tooltip.innerHTML = "";
-                    //hiden
-                    d3.select("#infotooltip").classed("hidden",true); 
-                }
-            });
+        
         
     </script>
 
