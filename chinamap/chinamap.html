@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="cn">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -138,30 +138,30 @@
 
                     //handler
                 function pathMouseoverHandler(){
-                        var thisPath = d3.select(this);
+                    var thisPath = d3.select(this);
 
-                        if(thisPath.attr("fill") == "#ccc"){
-                            //注意,这里是通过.attr()方法来获取颜色,而不是thisPath.attributes.fill来引用.
-                        }
-                        else{
-                            var dealt_time = 100;
-                            thisPath.transition().duration(dealt_time).style("fill","rgb(210,43,43)");
-                        }
+                    if(thisPath.attr("fill") == "#ccc"){
+                        //注意,这里是通过.attr()方法来获取颜色,而不是thisPath.attributes.fill来引用.
                     }
+                    else{
+                        var dealt_time = 100;
+                        thisPath.transition().duration(dealt_time).style("fill","rgb(210,43,43)");
+                    }
+                }
                 function pathMouseoutHandler(){
-                        var out_dealt_time = 100;
-                        d3.select(this).transition().duration(out_dealt_time).style("fill",function(d){
-                            var num = d.properties.num;
-                            var fill;
+                    var out_dealt_time = 100;
+                    d3.select(this).transition().duration(out_dealt_time).style("fill",function(d){
+                        var num = d.properties.num;
+                        var fill;
 
-                            if(num){
-                                fill = chinacolor(num);
-                            }else{
-                                fill = "#ccc";
-                            }
-                            return fill;
-                        });
-                    }
+                        if(num){
+                            fill = chinacolor(num);
+                        }else{
+                            fill = "#ccc";
+                        }
+                        return fill;
+                    });
+                }
 
                 //因为回调函数是异步执行,所以要想让画圆和添加圆的监听器都在画地图之后执行.
                 //就要把画圆和添加圆的监听器的代码都放在画地图的回调函数里面.
