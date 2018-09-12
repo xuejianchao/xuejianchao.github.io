@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+
+<body>
+    <svg id="svg">
+        <g id="g">
+            <circle id="circle" r="50" style="fill:blue"></circle>
+        </g>
+        <g id="g1">
+            <circle id="circle1" r="80" cx="100" style="fill:rgb(166, 166, 250)"></circle>
+        </g>
+    </svg>
+
+    <script>
+        document.getElementById('svg').onclick = function () {
+            console.log("hit svg");
+            this.fill = "#ccc";
+        }
+
+        document.getElementById('g').onclick = function () {
+            this.firstChild.fill="#ccc";
+            console.log('hit g');
+            console.log(this);
+        }
+        document.getElementById('circle').onclick = function () {
+            console.log('hit circle');
+        }
+    </script>
+</body>
+
+</html>

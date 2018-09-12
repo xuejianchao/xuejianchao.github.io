@@ -67,12 +67,26 @@
     <p class="title">国一毕业生去向表</p>
 
     <div id="svgContainer"></div>
-    <div id="infotooltip" class="hidden">
-    </div>
+
+    <button id="changeToBlue">变蓝!</button>
+    <button id="changeToRed">变红!</button>
+    <button id="changeToGreen">变绿!</button>
+
+    <div id="infotooltip" class="hidden"></div>
 
     <script>
         var height = 400;
         var width = 600;
+        var colorSet = {
+            provinceColor: ["rgb(252, 179, 179)", "rgb(232, 136, 136)",
+                "rgb(219, 98, 98)", "rgb(216, 54, 54)"
+            ],
+            provinceHignlineColor: 'rgb(255,0,0)',
+            cityColor: "rgb(255,242,0)",
+            background: '#ccc',
+        }
+
+
 
         var chinaprojection = d3.geoMercator()
             .center([107, 31])
@@ -83,9 +97,7 @@
             .projection(chinaprojection);
 
         var chinacolor = d3.scaleQuantize()
-            .range(["rgb(252, 179, 179)", "rgb(232, 136, 136)",
-                "rgb(219, 98, 98)", "rgb(216, 54, 54)"
-            ]);
+            .range(colorSet.provinceColor);
 
         var svg = d3.select("#svgContainer")
             .append("svg")
@@ -94,10 +106,14 @@
             .attr("height", height);
 
         var sv = document.getElementById('svgContainer');
-        console.log(sv.getAttribute("width"));
+
+        var whereIsPointer = {
+            past: '',
+            now: '',
+        }
 
 
-        //画路径/地图
+        //读入每个省份多少人
         d3.csv("./province.csv", function (chinadata) {
 
             //set domain of quantize scale
@@ -110,8 +126,10 @@
                 })
             ]);
 
+            //画路径,地图
             d3.json("china.json", function (chinajson) {
 
+                var dealt_time = 150;
                 //merge the csv into json
                 for (var i = 0; i < chinadata.length; i++) {
 
@@ -137,6 +155,9 @@
                     .enter()
                     .append("path")
                     .attr("d", chinapath)
+                    .attr("id", function (d) {
+                        return d.properties.name;
+                    })
                     .attr("fill", function (d) {
                         var num = d.properties.num;
                         var fill;
@@ -144,7 +165,7 @@
                         if (num) {
                             fill = chinacolor(num);
                         } else {
-                            fill = "#ccc";
+                            fill = colorSet.background;
                         }
                         return fill;
                     })
@@ -156,36 +177,63 @@
 
                 //handler
                 function pathMouseOverHandler() {
-                    var thisPath = d3.select(this);
+                    // console.log("mouse in path");
+                    // console.log(event);
+                    // console.log(event.type);
+                    // console.log(event.relatedTarget);
+                    // console.log(event.toElement);
+                    // console.log(event.fromElement);
+                    // console.log(" ");
 
-                    if (thisPath.attr("fill") == "#ccc") {
-                        //注意,这里是通过.attr()方法来获取颜色,而不是thisPath.attributes.fill来引用.
+
+                    var thisPath = d3.select(this);
+                    if (event.relatedTarget.tagName == "circle" && event.relatedTarget.__data__.Province ==
+                        this.__data__.properties.name) {
+                        //如果从所属的圆圈进来的话，就什么也不做，因为进入圆圈的时候，省份高亮并没有消失，所以再次进入省份是就不必添加高亮
                     } else {
-                        var dealt_time = 100;
-                        thisPath.transition().duration(dealt_time).style("fill", "rgb(210,43,43)");
+                        if (thisPath.attr("fill") == colorSet.background) {
+                            //进入没有学生的省份时也有相应的分支,只不过分支里什么处理都没有罢了.
+                            //注意,这里是通过.attr()方法来获取颜色,而不是thisPath.attributes.fill来引用.
+                        } else {
+                            thisPath.transition().duration(dealt_time).attr("fill", colorSet.provinceHignlineColor);
+                        }
                     }
                 }
 
+                //非常奇怪，简直不能再奇怪了
+                //如果下面这个函数声明不加参数的话,event就能正常使用;一旦加上就不行了.
                 function pathMouseOutHandler() {
-                    var out_dealt_time = 100;
-                    d3.select(this).transition().duration(out_dealt_time).style("fill", function (d) {
-                        var num = d.properties.num;
-                        var fill;
+                    // console.info("mouse out path");
+                    // console.log(event);
+                    // console.log(event.type);
+                    // console.log(event.relatedTarget);
+                    // console.log(event.toElement);
+                    // console.log(event.fromElement);
+                    // console.log(" ");
 
-                        if (num) {
-                            fill = chinacolor(num);
-                        } else {
-                            fill = "#ccc";
-                        }
-                        return fill;
-                    });
+                    if (event.relatedTarget.tagName == "circle" && event.relatedTarget.__data__.Province ==
+                        this.__data__.properties.name) {
+
+                    } else {
+                        d3.select(this)
+                            .transition()
+                            .duration(dealt_time)
+                            .attr("fill", function (d) {
+                                var num = d.properties.num;
+
+                                if (num) {
+                                    return chinacolor(num);
+                                } else {
+                                    return colorSet.background;
+                                }
+                            });
+                    }
                 }
-
                 //因为回调函数是异步执行,所以要想让画圆和添加圆的监听器都在画地图之后执行.
                 //就要把画圆和添加圆的监听器的代码都放在画地图的回调函数里面.
                 //画圆
                 d3.csv("./city.csv", function (chinaCityData) {
-                    console.log("开始画圆");
+
                     svg.selectAll("circle")
                         .data(chinaCityData)
                         .enter()
@@ -205,32 +253,49 @@
                         .attr("id", function (d) {
                             return d.City_EN;
                         })
-                        .style("fill", "rgb(255,242,0)")
+                        .style("fill", colorSet.cityColor)
                         .style("stroke", "gray")
                         .style("stroke-width", 0.25)
                         .style("opacity", 0.75);
-                    console.log("圆画完了");
+
                 });
 
-                //append event handler
+                //添加事件处理器
                 d3.csv("./student.csv", function (chinaStudentData) {
                     //遍历所有圆,加上事件处理器
                     var circles = svg.selectAll("circle");
                     circles.on("mouseover", circleMouseOverHandler)
                         .on("mouseout", circleMouseOutHandler);
 
-                    var dealt_time = 50;
+                    var out_dealt_time = 50;
 
+                    //想要把handler移到最外层,问题是怎么传入chinaStudentData
+                    //直接从参数穿进去是不行的,因为callback只接受一个参数,就是event
                     function circleMouseOverHandler() {
+                        // console.log("mouse in circle!")
+                        // console.log(event);
+                        // console.log(event.type);
+                        // console.log(event.relatedTarget);
+                        // console.log(event.toElement);
+                        // console.log(event.fromElement);
+                        // console.log(" ");
+
                         var r = parseFloat(this.r.baseVal.valueAsString);
 
                         if (r === 0) {
                             //r为0的城市,也就是没有学生去的城市,不显示.
                         } else {
+                            if (event.relatedTarget.tagName == "svg" || event.relatedTarget.id !=
+                                this.__data__.Province) {
+                                d3.select("#" + this.__data__.Province)
+                                    .transition()
+                                    .duration(150)
+                                    .attr("fill", colorSet.provinceHignlineColor);
+                            }
+
                             //bigger this circle
+                            //如果这里设置里渐变,但是鼠标移动的很快,在渐变效果还没完成时就出去了,变大的渐变效果就不会执行完,看起来就像圆圈变小了一样.
                             d3.select(this)
-                                .transition()
-                                .duration(dealt_time)
                                 .attr('r', r * 2);
 
                             console.log(this.__data__.City_EN);
@@ -255,8 +320,7 @@
 
 
                             var left = svgToLeft + parseFloat(this.cx.animVal.valueAsString) +
-                                5 +
-                                parseFloat(this.r.animVal.valueAsString);
+                                5 + parseFloat(this.r.animVal.valueAsString);
                             var top = svgToTop + parseFloat(this.cy.animVal.valueAsString) -
                                 parseFloat(this.r.animVal.valueAsString);
                             console.log(left);
@@ -298,6 +362,30 @@
                     }
 
                     function circleMouseOutHandler() {
+                        console.log("mouse out circle;");
+                        console.log(event);
+                        console.log(event.type);
+                        console.log(event.relatedTarget);
+                        console.log(event.toElement);
+                        console.log(event.fromElement);
+                        console.log(" ");
+
+                        if (event.relatedTarget.tagName == "svg" || event.relatedTarget.id !=
+                            this.__data__.Province) {
+                            d3.select("#" + this.__data__.Province)
+                                .transition()
+                                .duration(150)
+                                .attr("fill", function (d) {
+                                    var num = d.properties.num;
+
+                                    if (num) {
+                                        return chinacolor(num);
+                                    } else {
+                                        return colorSet.background;
+                                    }
+                                });
+                        }
+
                         var r = parseFloat(this.r.baseVal.valueAsString);
 
                         //delete all stud info
@@ -310,13 +398,60 @@
                         //让圆变小
                         d3.select(this)
                             .transition()
-                            .duration(dealt_time)
+                            .duration(out_dealt_time)
                             .attr('r', r / 2);
                     }
                 });
 
             });
         });
+
+        var Button = document.querySelectorAll('button');
+        Button.forEach(function (item) {
+            item.onclick = colorChangeHandler
+        });
+
+        function colorChangeHandler(e) {
+            switch (e.target.id) {
+                case 'changeToBlue':
+                    colorSet.provinceColor = ['rgb(139, 160, 235)', 'rgb(102, 129, 226)',
+                        'rgb(69, 101, 218)', 'rgb(34, 72, 213)'
+                    ];
+                    colorSet.provinceHignlineColor = 'rgb(0,0,255)';
+                    break;
+
+                case 'changeToGreen':
+                    colorSet.provinceColor = ['rgb(134,221,140)', 'rgb(46,163,54)',
+                        'rgb(0,144,10)', 'rgb(0,93,6)'
+                    ];
+                    colorSet.provinceHignlineColor = 'rgb(0,255,0)';
+                    break;
+
+                case 'changeToRed':
+                    colorSet.provinceColor = ["rgb(252, 179, 179)", "rgb(232, 136, 136)",
+                        "rgb(219, 98, 98)", "rgb(216, 54, 54)"
+                    ];
+                    colorSet.provinceHignlineColor = 'rgb(255,0,0)';
+                    break;
+            }
+
+            //猜测chinacolor.range()的作用是改变了chinacolor的一个属性,而不是直接引用外部变量.
+            //所以在这里要重新调用range(),改变chinacolor的属性.
+            chinacolor.range(colorSet.provinceColor);
+
+            svg.selectAll('path')
+                .attr('fill', function (d) {
+                    var num = d.properties.num;
+
+                    console.log(num);
+                    if (num) {
+                        console.log(chinacolor(num));
+                        return chinacolor(num);
+                    } else {
+                        return colorSet.background;
+                    }
+                });
+        }
     </script>
 
 
