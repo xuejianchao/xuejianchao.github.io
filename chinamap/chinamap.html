@@ -107,11 +107,6 @@
 
         var sv = document.getElementById('svgContainer');
 
-        var whereIsPointer = {
-            past: '',
-            now: '',
-        }
-
 
         //读入每个省份多少人
         d3.csv("./province.csv", function (chinadata) {
@@ -177,13 +172,6 @@
 
                 //handler
                 function pathMouseOverHandler() {
-                    // console.log("mouse in path");
-                    // console.log(event);
-                    // console.log(event.type);
-                    // console.log(event.relatedTarget);
-                    // console.log(event.toElement);
-                    // console.log(event.fromElement);
-                    // console.log(" ");
 
 
                     var thisPath = d3.select(this);
@@ -203,13 +191,6 @@
                 //非常奇怪，简直不能再奇怪了
                 //如果下面这个函数声明不加参数的话,event就能正常使用;一旦加上就不行了.
                 function pathMouseOutHandler() {
-                    // console.info("mouse out path");
-                    // console.log(event);
-                    // console.log(event.type);
-                    // console.log(event.relatedTarget);
-                    // console.log(event.toElement);
-                    // console.log(event.fromElement);
-                    // console.log(" ");
 
                     if (event.relatedTarget.tagName == "circle" && event.relatedTarget.__data__.Province ==
                         this.__data__.properties.name) {
@@ -269,16 +250,7 @@
 
                     var out_dealt_time = 50;
 
-                    //想要把handler移到最外层,问题是怎么传入chinaStudentData
-                    //直接从参数穿进去是不行的,因为callback只接受一个参数,就是event
                     function circleMouseOverHandler() {
-                        // console.log("mouse in circle!")
-                        // console.log(event);
-                        // console.log(event.type);
-                        // console.log(event.relatedTarget);
-                        // console.log(event.toElement);
-                        // console.log(event.fromElement);
-                        // console.log(" ");
 
                         var r = parseFloat(this.r.baseVal.valueAsString);
 
@@ -362,13 +334,6 @@
                     }
 
                     function circleMouseOutHandler() {
-                        console.log("mouse out circle;");
-                        console.log(event);
-                        console.log(event.type);
-                        console.log(event.relatedTarget);
-                        console.log(event.toElement);
-                        console.log(event.fromElement);
-                        console.log(" ");
 
                         if (event.relatedTarget.tagName == "svg" || event.relatedTarget.id !=
                             this.__data__.Province) {
@@ -408,7 +373,7 @@
 
         var Button = document.querySelectorAll('button');
         Button.forEach(function (item) {
-            item.onclick = colorChangeHandler
+            item.onclick = colorChangeHandler;
         });
 
         function colorChangeHandler(e) {
@@ -443,9 +408,7 @@
                 .attr('fill', function (d) {
                     var num = d.properties.num;
 
-                    console.log(num);
                     if (num) {
-                        console.log(chinacolor(num));
                         return chinacolor(num);
                     } else {
                         return colorSet.background;
