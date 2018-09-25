@@ -1,0 +1,86 @@
+.svg {
+    width: 600px;
+    display: block;
+
+}
+
+#svgContainer {
+    margin-right: auto;
+    margin-left: auto;
+
+    padding: 0;
+    height: 400px;
+    width: 600px;
+}
+
+.title {
+    text-align: center;
+    font-size: 40px;
+}
+
+.provinceLabel {
+    font-family: Helvetica, sans-serif;
+    font-size: 6px;
+    fill: white;
+    text-anchor: middle;
+    text-align: center;
+    cursor: default;
+}
+
+#infotooltip {
+    position: absolute;
+    width: 200px;
+    height: auto;
+    padding: 10px;
+    background-color: white;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+    -webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+    -moz-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+}
+
+#infotooltip.hidden {
+    display: none;
+}
+
+#infotooltip p {
+    margin: 0;
+    font-family: sans-serif;
+    font-size: 16px;
+    line-height: 20px;
+}
+
+.flexContainer {
+    display: flex;
+    flex-direction: row;
+}
+
+.mapArea {
+    flex: 500px 1;
+    order: 1;
+
+    height:100%;
+}
+
+.functionalArea {
+    height:100%;
+
+    flex: 0px 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#colorChangeArea {
+    flex: 1 100px;
+}
+
+#nameSearchArea {
+    flex: 1 100px;
+}
+
+#fileUpdateArea {
+    flex: 1 100px;
+}

@@ -1,0 +1,42 @@
+doctype html
+html(lang="zh-CN")
+  head
+    meta(charset="UTF-8")
+    meta(charset="UTF-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    meta(http-equiv="X-UA-Compatible" content="ie=edge")
+    script(type="text/javascript" src="/javascript/d3.js")
+    link(href="/stylesheet/chinamap.css" rel="stylesheet")
+    title 地图
+  body
+    div(class="flexContainer")
+      section(class="mapArea")
+        p(class="title") 国一毕业生去向表
+
+        div(id="svgContainer")
+      
+      section(class="functionalArea")
+        div(id="colorChangeArea")
+          h2 改变颜色
+          button(id="changeToBlue") 变蓝
+          button(id="changeToRed") 变红
+          button(id="changeToGreen") 变绿
+        
+        div(id="nameSearchArea")
+          h2 通过名字搜寻
+          label(for="nameInput") 你的名字:
+          input(name="nameInput" type="text" placeholder="请输入名字")
+          button(id="searchConfirm") 确认
+        
+        div(id="fileUpdateArea")
+          h2 上传CSV文件
+          form(action="/upload" method="post" enctype="multipart/form-data")
+            div
+              label(for="file") Choose a file:
+              input(type="file" id="file" name="studentInfo")
+            div
+              input(type="submit" value="确认")
+   
+    div(id="infotooltip" class="hidden")
+    p(id="filetoread") #{filetoread}
+  script(src="/javascript/chinamap.js" defer="defer" type="text/javascript")
