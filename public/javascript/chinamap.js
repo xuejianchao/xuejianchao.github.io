@@ -33,10 +33,10 @@ var sv = document.getElementById('svgContainer');
 var nameSearchButton = document.querySelector("#searchConfirm");
 var nameInput = document.querySelector("[name = nameInput]");
 var fileToRead = document.querySelector("#filetoread");
-var readFilePath = '/uploads/'+fileToRead.innerText;
+var readFilePath = '/uploads/' + fileToRead.innerText;
 
 //读入每个省份多少人
-d3.csv("./province.csv", function (chinadata) {
+d3.csv("/province.csv", function (chinadata) {
 
   //set domain of quantize scale
   chinacolor.domain([
@@ -49,12 +49,11 @@ d3.csv("./province.csv", function (chinadata) {
   ]);
 
   //画路径,地图
-  d3.json("china.json", function (chinajson) {
+  d3.json("/china.json", function (chinajson) {
 
     var dealt_time = 150;
     //merge the csv into json
     for (var i = 0; i < chinadata.length; i++) {
-
       var Num = parseFloat(chinadata[i].Num);
       var dataProvince = chinadata[i].Province;
 
@@ -95,23 +94,6 @@ d3.csv("./province.csv", function (chinadata) {
       .style("stroke-width", 0.1)
       .on("mouseover", pathMouseOverHandler)
       .on("mouseout", pathMouseOutHandler);
-
-
-    // svg.selectAll('text')
-    //     .data(chinajson.features)
-    //     .enter()
-    //     .append('text')
-    //     .attr('class', 'provinceLabel')
-    //     .attr("x", function (d) {
-    //         return chinapath.centroid(d)[0];
-    //     })
-    //     .attr("y", function (d) {
-    //         return chinapath.centroid(d)[1];
-    //     })
-    //     .attr('pointer-events', 'none')
-    //     .text(function (d) {
-    //         return d.properties.name;
-    //     });
 
     //handler
     function pathMouseOverHandler() {
@@ -157,7 +139,7 @@ d3.csv("./province.csv", function (chinadata) {
     //因为回调函数是异步执行,所以要想让画圆和添加圆的监听器都在画地图之后执行.
     //就要把画圆和添加圆的监听器的代码都放在画地图的回调函数里面.
     //画圆
-    d3.csv("./city.csv", function (chinaCityData) {
+    d3.csv("/city.csv", function (chinaCityData) {
 
       svg.selectAll("circle")
         .data(chinaCityData)
@@ -210,99 +192,103 @@ d3.csv("./province.csv", function (chinadata) {
       for (i; i < len; i++) {
         cityInfo.push(chinaCityData[i]);
       }
-    });
 
-    //添加事件处理器
-    d3.csv(readFilePath, function (chinaStudentData) {
-      //遍历所有圆,加上事件处理器
-      var circles = svg.selectAll("circle");
-      circles.on("mouseover", circleMouseOverHandler)
-        .on("mouseout", circleMouseOutHandler);
+      //添加事件处理器
+      d3.csv(readFilePath, function (chinaStudentData) {
+        //遍历所有圆,加上事件处理器
+        svg.selectAll("circle")
+          .on("mouseover", circleMouseOverHandler)
+          .on("mouseout", circleMouseOutHandler);
 
-      var out_dealt_time = 50;
+        console.log(readFilePath);
 
-      for (var i = 0; i < chinaStudentData.length; i++) {
-        //这一行是吧学生的数据保存到顶层变量中,在通过学生名字查找所在城市的时候使用.
-        studentInfo.push(chinaStudentData[i]);
-      }
+        var out_dealt_time = 50;
 
-      function circleMouseOverHandler() {
+        for (var i = 0; i < chinaStudentData.length; i++) {
+          //这一行是吧学生的数据保存到顶层变量中,在通过学生名字查找所在城市的时候使用.
+          studentInfo.push(chinaStudentData[i]);
+        }
 
-        var r = parseFloat(this.r.baseVal.valueAsString);
+        function circleMouseOverHandler() {
 
-        if (r === 0) {
-          //r为0的城市,也就是没有学生去的城市,不显示.
-        } else {
+          var r = parseFloat(this.r.baseVal.valueAsString);
+
+          if (r === 0) {
+            //r为0的城市,也就是没有学生去的城市,不显示.
+          } else {
+            if (event.relatedTarget.tagName == "svg" || event.relatedTarget.id !=
+              this.__data__.Province) {
+              d3.select("#" + this.__data__.Province)
+                .transition()
+                .duration(150)
+                .attr("fill", colorSet.provinceHignlineColor);
+            }
+
+            var thisCircle = d3.select(this);
+            //bigger this circle
+            //如果这里设置里渐变,但是鼠标移动的很快,在渐变效果还没完成时就出去了,变大的渐变效果就不会执行完,看起来就像圆圈变小了一样.
+            thisCircle.attr('r', r * 2);
+
+            console.log(this.__data__.City_EN);
+
+            //吧所有符合条件的学生的信息收集到数组中
+            var studentEntitled = [];
+            var city_en = this.__data__.City_EN;
+
+            for (var i = 0; i < chinaStudentData.length; i++) {
+              if (chinaStudentData[i].City_EN === city_en)
+                studentEntitled.push([chinaStudentData[i].Name, chinaStudentData[i].Collage]);
+            }
+
+            //fill tooltip
+            var cityname = this.__data__.City;
+            fillTooltip(studentEntitled, cityname);
+
+
+            //show the tooltip
+            var XYArray = getXYFromSVGXY([thisCircle.attr("cx"), thisCircle.style("cy")], thisCircle.style("r"));
+            showTootlip(XYArray);
+
+          }
+        }
+
+        function circleMouseOutHandler() {
+
           if (event.relatedTarget.tagName == "svg" || event.relatedTarget.id !=
             this.__data__.Province) {
             d3.select("#" + this.__data__.Province)
               .transition()
               .duration(150)
-              .attr("fill", colorSet.provinceHignlineColor);
+              .attr("fill", function (d) {
+                var num = d.properties.num;
+
+                if (num) {
+                  return chinacolor(num);
+                } else {
+                  return colorSet.background;
+                }
+              });
           }
 
-          var thisCircle = d3.select(this);
-          //bigger this circle
-          //如果这里设置里渐变,但是鼠标移动的很快,在渐变效果还没完成时就出去了,变大的渐变效果就不会执行完,看起来就像圆圈变小了一样.
-          thisCircle.attr('r', r * 2);
+          var r = parseFloat(this.r.baseVal.valueAsString);
 
-          console.log(this.__data__.City_EN);
+          //delete all stud info
+          var tooltip = document.getElementById("infotooltip");
+          tooltip.innerHTML = "";
+          //hiden
+          d3.select("#infotooltip")
+            .classed("hidden", true);
 
-          //吧所有符合条件的学生的信息收集到数组中
-          var studentEntitled = [];
-          var city_en = this.__data__.City_EN;
-
-          for (var i = 0; i < chinaStudentData.length; i++) {
-            if (chinaStudentData[i].City_EN === city_en)
-              studentEntitled.push([chinaStudentData[i].Name, chinaStudentData[i].Collage]);
-          }
-
-          //fill tooltip
-          var cityname = this.__data__.City;
-          fillTooltip(studentEntitled, cityname);
-
-
-          //show the tooltip
-          var XYArray = getXYFromSVGXY([thisCircle.attr("cx"), thisCircle.style("cy")], thisCircle.style("r"));
-          showTootlip(XYArray);
-
-        }
-      }
-
-      function circleMouseOutHandler() {
-
-        if (event.relatedTarget.tagName == "svg" || event.relatedTarget.id !=
-          this.__data__.Province) {
-          d3.select("#" + this.__data__.Province)
+          //让圆变小
+          d3.select(this)
             .transition()
-            .duration(150)
-            .attr("fill", function (d) {
-              var num = d.properties.num;
-
-              if (num) {
-                return chinacolor(num);
-              } else {
-                return colorSet.background;
-              }
-            });
+            .duration(out_dealt_time)
+            .attr('r', r / 2);
         }
-
-        var r = parseFloat(this.r.baseVal.valueAsString);
-
-        //delete all stud info
-        var tooltip = document.getElementById("infotooltip");
-        tooltip.innerHTML = "";
-        //hiden
-        d3.select("#infotooltip")
-          .classed("hidden", true);
-
-        //让圆变小
-        d3.select(this)
-          .transition()
-          .duration(out_dealt_time)
-          .attr('r', r / 2);
-      }
+      });
     });
+
+
   });
 });
 
@@ -389,7 +375,9 @@ function nameSearchHandler() {
     .style("fill", colorSet.provinceHignlineColor);
 
   coordition = getXYFromSVGXY(SVGCoordition, d3.select("#" + city_EN).attr("r"));
-  fillTooltip([[name, school]], city);
+  fillTooltip([
+    [name, school]
+  ], city);
   showTootlip(coordition);
 }
 
@@ -402,8 +390,8 @@ function getXYFromSVGXY(SVGXYArray, r) {
   var svgToLeft = svgReact.left;
   var svgToTop = svgReact.top;
 
-  var left = svgToLeft + parseFloat(SVGXYArray[0]) +5 + parseFloat(r);
-  var top = svgToTop + parseFloat(SVGXYArray[1]) -parseFloat(r);
+  var left = svgToLeft + parseFloat(SVGXYArray[0]) + 5 + parseFloat(r);
+  var top = svgToTop + parseFloat(SVGXYArray[1]) - parseFloat(r);
 
   return ([left, top]);
 }
